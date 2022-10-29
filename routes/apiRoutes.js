@@ -1,17 +1,13 @@
-const fs = require('fs');
 const router = require('express').Router();
-const uuid = require('../Develop/db/helpers/uuid');
+const fs = require('fs');
+const { readFromFile, readAndAppend, readAndDelete } = require('../helpers/fsUtils');
+const uuid = require('../helpers/uuid');
+
 
 //Get api and parse notes as JSON from db.json file.
 router.get('/notes', (req, res) => {
-    fs.readFile('db/db.json', 'utf8', (err, data) => {
-        if (err) {
-            console.log(err);
-        } else {
-            let existingNotes = JSON.parse(data);
-            res.json(existingNotes);
-        }
-    })
+    readFromFile('./db/db.json').then((data) => res.json(JSON.parse(data)))
+    
 });
 
 //Post api notes.
@@ -20,28 +16,15 @@ router.post('/notes', (req, res) => {
     const { title, text } = req.body;
 
     if (title, text) {
-        const notes = {
+        const note = {
             title,
             text,
             id: uuid(),
         };
-//Rcv new note to save on request body, add to db.json file then return the new note to the client. Need unique ID for saving.
-        let existingNotes = [];
 
-        fs.readFile('db/db.json', 'utf8', (err, data) => {
-            if (err) {
-                console.log(err);
-            } else {
-                existingNotes = JSON.parse(data);
-                existingNotes.push(notes);
-                fs.writeFileSync(
-                    path.join(__dirname, '../db/db.json'),
-                    JSON.stringify(existingNotes),
-                    'utf8'
-                );
-            }
-        });
-        res.json(existingNotes);
+        readAndAppend(note, './db/db.json');
+        res.json(`Note added successfully 🚀`);
+
     } else {
         res.status(500).json('Error saving note.');
     }
@@ -49,12 +32,8 @@ router.post('/notes', (req, res) => {
 
 //Delete the note via specific id.
 router.delete('/notes/:id', (req, res) => {
-    fs.readFile('db/db.json', 'utf8', (err, data) => {
-        if (err) {
-        } else {
-
-        }
-    })
+   readAndDelete('./db/db.json', req.params.id)
+   res.json(`Note deleted successfully 🚀`);
 });
 
 module.exports = router;
